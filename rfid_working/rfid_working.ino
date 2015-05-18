@@ -21,24 +21,24 @@ void loop()
 {
   
   // put your main code here, to run repeatedly:
-  readTag();
-  if(strlen(newTag)==0)
+  //readTag();
+  if(readTag()==0)
   return;
-  else
-  access();
-  
+  else{
+    access();
+  }
 }
 
 int checkTag(char nTag[], char oTag[]){
-  Serial.print("Checking for: ");
-  Serial.print(oTag);
+  //Serial.print("Checking for: ");
+  //Serial.print(oTag);
   for(int i=0;i<idLen;i++){
     if(nTag[i]!=oTag[i]){
-      Serial.println(" False");
+      //Serial.println(" False");
       return 0;
     }
   }
-  Serial.println(" True");
+  //Serial.println(" True");
   return 1;
 }
 
@@ -67,8 +67,11 @@ int readTag(){
   }
   if(strlen(newTag)==0)
   return 0;
-  else
-  return 1;
+  else{
+    Serial.print("Tag read: ");
+    Serial.println(newTag);
+    return 1;
+  }
 }
 
 void access(){
