@@ -39,21 +39,24 @@ void setup() {
   //radio.startListening();
   radio.printDetails();
   pinMode(DOOR,INPUT);
+  pinMode(3,OUTPUT);
 }
 
 void loop() {
+  radio.powerUp();
   // put your main code here, to run repeatedly:
   doorval = digitalRead(DOOR);
   door.from = NODE_ID;
   door.to = 0;
   door.type = 3;
   door.data1 = doorval;
-  
-  bool ok = radio.write(&door,sizeof(payload));
-  if(ok)
+  digitalWrite(3,doorval);
+  bool ok = false;
+  while(!ok)
+  ok = radio.write(&door,sizeof(payload));
+  //if(ok)
   printf("ok\n");
-  else
-  printf("failed\n");
-  LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF); 
-  LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
+  radio.powerDown();
+  LowPower.powerDown(SLEEP_1S, ADC_OFF, BOD_OFF); 
+  LowPower.powerDown(SLEEP_1S, ADC_OFF, BOD_OFF);
 }

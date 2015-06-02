@@ -58,7 +58,7 @@ void loop() {
   //else
   //printf("failed\n");
   radio.powerDown();
-  LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF); 
-  //LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
+  LowPower.powerDown(SLEEP_1S, ADC_OFF, BOD_OFF); 
+  LowPower.powerDown(SLEEP_1S, ADC_OFF, BOD_OFF);
   //delay(16000);
 }

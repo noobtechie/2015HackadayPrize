@@ -42,6 +42,7 @@ void setup() {
 }
 
 void loop() {
+  radio.powerUp();
   // put your main code here, to run repeatedly:
   pirval = digitalRead(PIR);
   pir2.from = NODE_ID;
@@ -49,11 +50,14 @@ void loop() {
   pir2.type = 2;
   pir2.data1 = pirval;
   
-  bool ok = radio.write(&pir2,sizeof(payload));
-  if(ok)
+  bool ok = false;
+  while(!ok)
+  ok = radio.write(&pir2,sizeof(payload));
+  //if(ok)
   printf("ok\n");
-  else
-  printf("failed\n");
-  LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF); 
-  LowPower.powerDown(SLEEP_8S, ADC_OFF, BOD_OFF);
+  //else
+  //printf("failed\n");
+  radio.powerDown();
+  LowPower.powerDown(SLEEP_1S, ADC_OFF, BOD_OFF); 
+  LowPower.powerDown(SLEEP_1S, ADC_OFF, BOD_OFF);
 }
