@@ -1,14 +1,20 @@
+//Include files
+
 #include <SPI.h>
 #include "nRF24L01.h"
 #include "RF24.h"
 #include "printf.h"
 #include "LowPower.h"
 
+//Defines for Network
+
 #define WIND 4
 #define NET_ID 1
 #define NODE_ID 4
 
 int winval;
+
+//Structure to packetize data
 
 typedef struct{
   uint8_t from;
@@ -20,14 +26,17 @@ typedef struct{
 
 payload wind;
 
-RF24 radio(9,10);
+RF24 radio(9,10); //Initialize radio class
 
-const uint64_t pipe = 0xDEADBEEF04;
+const uint64_t pipe = 0xDEADBEEF04; //Pipe address for this node
 
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(57600);
   printf_begin();
+  
+  //Set up radio for transmission
+  
   radio.begin();
   radio.setRetries(15,15);
   radio.setDataRate(RF24_250KBPS);
@@ -42,14 +51,19 @@ void setup() {
 }
 
 void loop() {
+  //Power up radio
+  
   radio.powerUp();
   //delay(500);
-  // put your main code here, to run repeatedly:
+  // Get data and store in structure
   winval = digitalRead(WIND);
   wind.from = NODE_ID;
   wind.to = 0;
   wind.type = 4;
   wind.data1 = winval;
+  
+  //Wait till all data is transmitted
+  
   bool ok = false;
   while(!ok)
   ok = radio.write(&wind,sizeof(payload));
@@ -57,6 +71,9 @@ void loop() {
   printf("ok\n");
   //else
   //printf("failed\n");
+  
+  //Power down radio and board
+  
   radio.powerDown();
   LowPower.powerDown(SLEEP_1S, ADC_OFF, BOD_OFF); 
   LowPower.powerDown(SLEEP_1S, ADC_OFF, BOD_OFF);
