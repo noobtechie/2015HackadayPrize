@@ -1,8 +1,12 @@
+//Include files
+
 #include <SPI.h>
 #include "nRF24L01.h"
 #include "RF24.h"
 #include "printf.h"
 #include "LowPower.h"
+
+//Defines for network
 
 #define RELAY_CH1 4
 #define RELAY_CH2 5
@@ -10,6 +14,8 @@
 #define NODE_ID 6
 
 int relval;
+
+//Structure to packetize the data
 
 typedef struct{
   uint8_t from;
@@ -23,12 +29,15 @@ payload rel2;
 
 RF24 radio(9,10);
 
-const uint64_t pipe = 0xDEADBEEF06;
+const uint64_t pipe = 0xDEADBEEF06;   //Pipe address of this node
 
 void setup() {
   // put your setup code here, to run once:
   Serial.begin(57600);
   printf_begin();
+  
+  //Set up radio for reception
+  
   radio.begin();
   radio.setRetries(15,15);
   radio.setDataRate(RF24_250KBPS);
@@ -44,13 +53,16 @@ void setup() {
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
+  // Wait till data is received
   if(radio.available())
   {
     bool done = false;
     while(!done)
       done = radio.read(&rel2,sizeof(payload));
   }
+  
+  //Write received data to relays
+  
   digitalWrite(RELAY_CH1,rel2.data1);
   digitalWrite(RELAY_CH2,rel2.data2);
 }
