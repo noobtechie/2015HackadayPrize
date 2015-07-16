@@ -1,3 +1,5 @@
+//Include Header files
+
 #include <Enrf24.h>
 #include <nRF24L01.h>
 #include <string.h>
@@ -9,6 +11,8 @@ char ssid[] = "sounak";
 // your network password
 char password[] = "12345678";
 
+//Network Related defines
+
 #define NET_ID 1
 #define NODE_ID 0
 #define REL1_ID 1
@@ -18,7 +22,7 @@ char password[] = "12345678";
 #define MAGSWITCH 3
 #define OBSTACLE 4
 
-Enrf24 radio(PA_5, PA_6, PA_7);
+Enrf24 radio(PA_5, PA_6, PA_7); //Initialize radio CS and CE to Port A5 and A7
 
 //Structure for data packets
 
@@ -32,6 +36,8 @@ typedef struct{
 
 payload rel1;
 payload rel2;
+
+//Structure to store data from the sensors
 
 typedef struct{
   boolean pir1;
@@ -54,6 +60,7 @@ const uint8_t rel1addr[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0x05 };
 const uint8_t rel2addr[] = { 0xDE, 0xAD, 0xBE, 0xEF, 0x06 };
 
 // ThingSpeak Settings
+
 char thingSpeakAddress[] = "api.thingspeak.com";
 String writeAPIKey = "OIR8LLHNYCHMZ0CA";
 String talkbackAPIKey = "TITL993H7V54V098";
@@ -69,6 +76,7 @@ long lastConnectionTime = 0;
 int failedCounter = 0;
 
 //RFID settings
+
 const int rfidInterval = 8*1000;
 long lastRfidAccess;
 boolean accessState;
@@ -84,7 +92,8 @@ char addTag[idLen] = "07454582";
 char delTag[idLen] = "07502485";
 char newTag[idLen];
 
-// Initialize Launchpad WiFi Client
+// Initialize Launchpad WiFi Client Class
+
 WiFiClient client;
 
 void setup()
@@ -94,7 +103,8 @@ void setup()
   Serial.begin(9600);
   Serial1.begin(9600);
   
-  //Get Configurations
+  //Get Configurations via SMS
+  
   getConfigSMS();
   
   //WiFi Setup
@@ -104,6 +114,8 @@ void setup()
   //Radio Configuration
   
   radioconfig();
+  
+  //Pin Configurations
   
   pinMode(RED_LED,OUTPUT);
   digitalWrite(RED_LED,HIGH);
@@ -125,10 +137,16 @@ void loop()
   //radio.disableRX();
   //gettime();
   accessState = checkrfid();
+  
+  //Receive Sensor datas
+  
   getdoor();
   getwind();
   getpir1();
   getpir2();
+  
+  //Upload to Thingspeak and check command if any
+  
   if((millis() - lastConnectionTime > updateThingSpeakInterval)||(failedCounter>0)){
     failedCounter = 0;
     
@@ -148,6 +166,8 @@ void loop()
   
 }
 
+//Access control for RFID
+
 boolean checkrfid(){
   if((readTag()==0)&&((millis()-lastRfidAccess)>rfidInterval))
   return false;
@@ -162,13 +182,17 @@ boolean checkrfid(){
   return true;
 }
 
+//Yet to define
+
 void getConfigSMS(){
   
 }
 
+//Automatic control of appliances
+
 void setAutomatic(){
   boolean lightmode;
-  response = checktalkback(timeCommand);
+  response = checktalkback(timeCommand);  
   if(response.compareTo("OFF")==0)
   lightmode = false;
   else if(response.compareTo("ON")==0)
@@ -189,6 +213,8 @@ void setAutomatic(){
   }
 }
 
+//Intrusion detection
+
 boolean intrusion(){
   if(packet.wind == HIGH)
   return true;
@@ -203,8 +229,10 @@ void sendAlert(){
 }
 
 void sendMessage(String alertMessage){
-  Serial.println("Alarm Raised");
+  Serial.println("alertMessage");
 }
+
+//Function to upload data to Thingspeak server
 
 void updateThingspeak(){
   String fieldData = "&field1="+String(packet.pir1,DEC)+"&field2="+String(packet.pir2,DEC)+"&field3="+String(packet.door,DEC)+"&field4="+String(packet.wind,DEC);
@@ -224,6 +252,8 @@ void updateThingspeak(){
   else
   failedCounter++;
 }
+
+//Manual control of appliances from Thingspeak commands
 
 void setManual(){
   boolean R1data1,R1data2,R2data1,R2data2;
@@ -252,6 +282,8 @@ void setManual(){
   setrel1(R2data1,R2data2);
 }
 
+//Function to receive commands from thingspeak
+
 String checktalkback(String commandID){
   String talkbackURL = "GET http://api.thingspeak.com/talkbacks/"+talkbackID+"/commands/"+commandID+"?api_key="+talkbackAPIKey;
   String talkBackCommand;
@@ -268,6 +300,8 @@ String checktalkback(String commandID){
   }
   return talkBackCommand;
 }
+
+//Function to debug the sensor readings
 
 void showStatus(){
   Serial.print("PIR1:");
@@ -288,20 +322,29 @@ void showStatus(){
    digitalWrite(RED_LED,HIGH);
  }
 }*/
+//Function to turn relay1 ON or OFF
 
 void setrel1(boolean ch1,boolean ch2){
   payload rel1;
-  radio.setTXaddress((void*)&rel1addr);
+  radio.setTXaddress((void*)&rel1addr); //Set TX pipe address of relay1
+  
+  //Prepare the structure
+  
   rel1.from = NODE_ID;
   rel1.to = REL1_ID;
   rel1.type = RELAY;
   rel1.data1 = ch1;
   rel1.data2 = ch2;
+  
+  //Send the packet
+  
   radio.write((void*)&rel1,sizeof(payload));
   radio.flush();
   dump_radio_status_to_serialport(radio.radioState());  // Should report IDLE
   //delay(1000);
 }
+
+//Function to send ON or OFF to relay2 (Same as Relay1)
 
 void setrel2(uint8_t ch1,uint8_t ch2){
   payload rel2;
@@ -317,19 +360,32 @@ void setrel2(uint8_t ch1,uint8_t ch2){
   //delay(1000);
 }
 
+//Functions to receive sensor data
+
 void getpir1(){
   payload pir1;
-  radio.setRXaddress((void*)&pir1addr);
+  radio.setRXaddress((void*)&pir1addr); //Set PIPE address of the sensor
   radio.enableRX();
   dump_radio_status_to_serialport(radio.radioState());
+  
+  //Wait till all data is received
+  
   while (!radio.available(true))
     ;
   if (radio.read(&pir1,sizeof(payload)))
     Serial.println("Received packet: pir1");
+    
+    //Disable RX and put radio to sleep
+    
   radio.disableRX();  
   radio.deepsleep();
+  
+  //Save data in the structure
+  
   packet.pir1 = pir1.data1;
 }
+
+//Function to receive data from PIR sensor 2
 
 void getpir2(){
   payload pir2;
@@ -345,11 +401,18 @@ void getpir2(){
   packet.pir2 = pir2.data1;
 }
 
+//Function to configure radio data
+
 void radioconfig(){
   Serial.println("Inside radio config");
+  
+  //Initialize the SPI
+  
   SPI.begin();
   SPI.setDataMode(SPI_MODE0);
   SPI.setBitOrder(1);
+  
+  //Set Radio parameters
   
   radio.begin(250000);  //  250Kbps
   radio.setChannel(92);  //Channel 92
@@ -358,6 +421,8 @@ void radioconfig(){
   //radio.enableRX();
   dump_radio_status_to_serialport(radio.radioState()); 
 }
+
+//Function to receive data from door sensor
 
 void getdoor(){
   payload door;
@@ -372,6 +437,8 @@ void getdoor(){
   radio.deepsleep(); 
   packet.door = door.data1;
 }
+
+//Function to receive data from window obstacle sensor
 
 void getwind(){
   payload wind;
@@ -388,9 +455,11 @@ void getwind(){
   packet.wind = wind.data1;
 }
 
+//Function to configure WiFi
+
 void wificonfig(){
   Serial.println("Starting WiFi SmartConfig");
-  WiFi.startSmartConfig();
+  WiFi.startSmartConfig();  //Use this if using SmartConfig
 
   Serial.print("Connected to SSID: ");
   Serial.println(WiFi.SSID());
@@ -405,6 +474,8 @@ void wificonfig(){
   Serial.print("IP Address: ");
   Serial.println(WiFi.localIP()); 
 }
+
+//Function to debug radio status
 
 void dump_radio_status_to_serialport(uint8_t status)
 {
@@ -435,6 +506,7 @@ void dump_radio_status_to_serialport(uint8_t status)
   }
 }
 
+//Function to start WiFi without SmartConfig
 
 void startWiFi()
 {
@@ -466,6 +538,8 @@ void startWiFi()
   printWifiStatus();
 }
 
+//Function to debug WiFi status
+
 void printWifiStatus() {
   // print the SSID of the network you're attached to:
   Serial.print("SSID: ");
@@ -483,6 +557,8 @@ void printWifiStatus() {
   Serial.println(" dBm");
 }
 
+//Function to compare two RFID tags
+
 int checkTag(char nTag[], char oTag[]){
   //Serial.print("Checking for: ");
   //Serial.print(oTag);
@@ -495,6 +571,8 @@ int checkTag(char nTag[], char oTag[]){
   //Serial.println(" True");
   return 1;
 }
+
+//Function to read tag from RFID
 
 int readTag(){
   for (int c=0 ; c<idLen ; c++){
@@ -527,6 +605,8 @@ int readTag(){
     return 1;
   }
 }
+
+//Access control of RFID tags
 
 int access(){
   /*readTag();
